@@ -16,8 +16,10 @@ import android.widget.Toast
 import androidx.fragment.app.commit
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.yandex.practicum.moviessearch.R
+import ru.yandex.practicum.moviessearch.core.navigation.Router
 import ru.yandex.practicum.moviessearch.databinding.FragmentMoviesBinding
 import ru.yandex.practicum.moviessearch.domain.models.Movie
 import ru.yandex.practicum.moviessearch.presentation.movies.MoviesState
@@ -32,25 +34,18 @@ class MoviesFragment : Fragment() {
 
     private val viewModel by viewModel<MoviesViewModel>()
 
+    private val router: Router by inject()
+
     private val adapter = MoviesAdapter { movie ->
         if (clickDebounce()) {
-// Навигируемся на следующий экран
-            parentFragmentManager.commit {
-                replace(
-                    // Указали, в каком контейнере работаем
-                    R.id.rootFragmentContainerView,
-                    // Создали фрагмент
-                    DetailsFragment.newInstance(
-                        movieId = movie.id,
-                        posterUrl = movie.image
-                    ),
-                    // Указали тег фрагмента
-                    DetailsFragment.TAG
-                )
 
-                // Добавляем фрагмент в Back Stack
-                addToBackStack(DetailsFragment.TAG)
-            }
+            // Навигируемся на следующий экран
+            router.openFragment(
+                DetailsFragment.newInstance(
+                    movieId = movie.id,
+                    posterUrl = movie.image
+                )
+            )
         }
     }
 
