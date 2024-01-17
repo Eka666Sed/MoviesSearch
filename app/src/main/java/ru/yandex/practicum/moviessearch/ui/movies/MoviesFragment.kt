@@ -13,13 +13,11 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.fragment.app.commit
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.yandex.practicum.moviessearch.R
-import ru.yandex.practicum.moviessearch.core.navigation.Router
 import ru.yandex.practicum.moviessearch.databinding.FragmentMoviesBinding
 import ru.yandex.practicum.moviessearch.domain.models.Movie
 import ru.yandex.practicum.moviessearch.presentation.movies.MoviesState
@@ -34,18 +32,10 @@ class MoviesFragment : Fragment() {
 
     private val viewModel by viewModel<MoviesViewModel>()
 
-    private val router: Router by inject()
-
     private val adapter = MoviesAdapter { movie ->
         if (clickDebounce()) {
-
-            // Навигируемся на следующий экран
-            router.openFragment(
-                DetailsFragment.newInstance(
-                    movieId = movie.id,
-                    posterUrl = movie.image
-                )
-            )
+            findNavController().navigate(R.id.action_moviesFragment_to_detailsFragment,
+                DetailsFragment.createArgs(movie.id, movie.image))
         }
     }
 
