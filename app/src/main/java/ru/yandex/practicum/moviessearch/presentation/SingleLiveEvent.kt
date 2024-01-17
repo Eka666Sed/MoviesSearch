@@ -1,4 +1,4 @@
-package ru.yandex.practicum.moviessearch.presentation.movies
+package ru.yandex.practicum.moviessearch.presentation
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData

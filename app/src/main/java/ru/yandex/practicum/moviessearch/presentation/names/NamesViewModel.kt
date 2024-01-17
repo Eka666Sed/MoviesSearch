@@ -1,4 +1,4 @@
-package ru.yandex.practicum.moviessearch.presentation.movies
+package ru.yandex.practicum.moviessearch.presentation.names
 
 import android.content.Context
 import android.os.Handler
@@ -8,12 +8,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import ru.yandex.practicum.moviessearch.R
-import ru.yandex.practicum.moviessearch.domain.api.MoviesInteractor
-import ru.yandex.practicum.moviessearch.domain.models.Movie
+import ru.yandex.practicum.moviessearch.domain.api.NamesInteractor
+import ru.yandex.practicum.moviessearch.domain.models.Person
 import ru.yandex.practicum.moviessearch.presentation.SingleLiveEvent
 
-class MoviesViewModel(private val context: Context,
-                      private val moviesInteractor: MoviesInteractor) : ViewModel() {
+class NamesViewModel(private val context: Context,
+                     private val namesInteractor: NamesInteractor
+) : ViewModel() {
 
     companion object {
         private const val SEARCH_DEBOUNCE_DELAY = 2000L
@@ -22,8 +23,8 @@ class MoviesViewModel(private val context: Context,
 
     private val handler = Handler(Looper.getMainLooper())
 
-    private val stateLiveData = MutableLiveData<MoviesState>()
-    fun observeState(): LiveData<MoviesState> = stateLiveData
+    private val stateLiveData = MutableLiveData<NamesState>()
+    fun observeState(): LiveData<NamesState> = stateLiveData
 
     private val showToast = SingleLiveEvent<String?>()
     fun observeShowToast(): LiveData<String?> = showToast
@@ -46,47 +47,47 @@ class MoviesViewModel(private val context: Context,
 
         val postTime = SystemClock.uptimeMillis() + SEARCH_DEBOUNCE_DELAY
         handler.postAtTime(
-                searchRunnable,
-                SEARCH_REQUEST_TOKEN,
-                postTime,
+            searchRunnable,
+            SEARCH_REQUEST_TOKEN,
+            postTime,
         )
     }
 
     private fun searchRequest(newSearchText: String) {
         if (newSearchText.isNotEmpty()) {
-            renderState(MoviesState.Loading)
+            renderState(NamesState.Loading)
 
-            moviesInteractor.searchMovies(newSearchText, object : MoviesInteractor.MoviesConsumer {
-                override fun consume(foundMovies: List<Movie>?, errorMessage: String?) {
-                    val movies = mutableListOf<Movie>()
-                    if (foundMovies != null) {
-                        movies.addAll(foundMovies)
+            namesInteractor.searchNames(newSearchText, object : NamesInteractor.NamesConsumer {
+                override fun consume(foundNames: List<Person>?, errorMessage: String?) {
+                    val persons = mutableListOf<Person>()
+                    if (foundNames != null) {
+                        persons.addAll(foundNames)
                     }
 
                     when {
                         errorMessage != null -> {
                             renderState(
-                                    MoviesState.Error(
-                                            message = context.getString(
-                                                    R.string.something_went_wrong),
-                                    )
+                                NamesState.Error(
+                                    message = context.getString(
+                                        R.string.something_went_wrong),
+                                )
                             )
                             showToast.postValue(errorMessage)
                         }
 
-                        movies.isEmpty() -> {
+                        persons.isEmpty() -> {
                             renderState(
-                                    MoviesState.Empty(
-                                            message = context.getString(R.string.nothing_found),
-                                    )
+                                NamesState.Empty(
+                                    message = context.getString(R.string.nothing_found),
+                                )
                             )
                         }
 
                         else -> {
                             renderState(
-                                    MoviesState.Content(
-                                            movies = movies,
-                                    )
+                                NamesState.Content(
+                                    persons = persons,
+                                )
                             )
                         }
                     }
@@ -96,7 +97,7 @@ class MoviesViewModel(private val context: Context,
         }
     }
 
-    private fun renderState(state: MoviesState) {
+    private fun renderState(state: NamesState) {
         stateLiveData.postValue(state)
     }
 }
