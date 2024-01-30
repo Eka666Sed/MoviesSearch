@@ -69,45 +69,37 @@ class NamesViewModel(private val context: Context,
 
     private fun searchRequest(newSearchText: String) {
         if (newSearchText.isNotEmpty()) {
+
             renderState(NamesState.Loading)
 
-            namesInteractor.searchNames(newSearchText, object : NamesInteractor.NamesConsumer {
-                override fun consume(foundNames: List<Person>?, errorMessage: String?) {
-                    val persons = mutableListOf<Person>()
-                    if (foundNames != null) {
-                        persons.addAll(foundNames)
-                    }
-
-                    when {
-                        errorMessage != null -> {
-                            renderState(
-                                NamesState.Error(
-                                    message = context.getString(
-                                        R.string.something_went_wrong),
-                                )
-                            )
-                            showToast.postValue(errorMessage)
-                        }
-
-                        persons.isEmpty() -> {
-                            renderState(
-                                NamesState.Empty(
-                                    message = context.getString(R.string.nothing_found),
-                                )
-                            )
-                        }
-
-                        else -> {
-                            renderState(
-                                NamesState.Content(
-                                    persons = persons,
-                                )
-                            )
-                        }
-                    }
-
+            viewModelScope.launch {
+                namesInteractor
+                    .searchNames(newSearchText)
+                    .collect { pair ->
+                        processResult(pair.first, pair.second)
                 }
-            })
+            }
+        }
+    }
+
+    private fun processResult(foundNames: List<Person>?, errorMessage: String?) {
+        val persons = mutableListOf<Person>()
+        if (foundNames != null) {
+            persons.addAll(foundNames)
+        }
+
+        when {
+            errorMessage != null -> {
+                renderState(NamesState.Error(message = context.getString(
+                    R.string.something_went_wrong)))
+                showToast.postValue(errorMessage)
+            }
+            persons.isEmpty() -> {
+                renderState(NamesState.Empty(message = context.getString(R.string.nothing_found)))
+            }
+            else -> {
+                renderState(NamesState.Content(persons = persons))
+            }
         }
     }
 
