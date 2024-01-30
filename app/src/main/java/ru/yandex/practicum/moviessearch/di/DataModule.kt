@@ -22,7 +22,7 @@ val dataModule = module {
 
     single<IMDbApiService> {
         Retrofit.Builder()
-            .baseUrl("https://imdb-api.com")
+            .baseUrl("https://tv-api.com")
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()

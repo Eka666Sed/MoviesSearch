@@ -13,9 +13,14 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.yandex.practicum.moviessearch.R
 import ru.yandex.practicum.moviessearch.databinding.FragmentMoviesBinding
@@ -23,6 +28,8 @@ import ru.yandex.practicum.moviessearch.domain.models.Movie
 import ru.yandex.practicum.moviessearch.presentation.movies.MoviesState
 import ru.yandex.practicum.moviessearch.presentation.movies.MoviesViewModel
 import ru.yandex.practicum.moviessearch.ui.details.DetailsFragment
+import ru.yandex.practicum.moviessearch.ui.root.RootActivity
+import ru.yandex.practicum.moviessearch.util.debounce
 
 class MoviesFragment : Fragment() {
 
@@ -31,13 +38,16 @@ class MoviesFragment : Fragment() {
     }
 
     private val viewModel by viewModel<MoviesViewModel>()
-
-    private val adapter = MoviesAdapter { movie ->
-        if (clickDebounce()) {
-            findNavController().navigate(R.id.action_moviesFragment_to_detailsFragment,
-                DetailsFragment.createArgs(movie.id, movie.image))
-        }
-    }
+    private lateinit var onMovieClickDebounce: (Movie) -> Unit
+    private var adapter: MoviesAdapter? = null
+//    private val adapter = MoviesAdapter { movie ->
+//        (activity as RootActivity).animateBottomNavigationView()
+//        if (clickDebounce()) {
+//            findNavController().navigate(R.id.action_moviesFragment_to_detailsFragment,
+//                DetailsFragment.createArgs(movie.id, movie.image))
+//        }
+//        onMovieClickDebounce(movie)
+//    }
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -62,6 +72,16 @@ class MoviesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        onMovieClickDebounce = debounce<Movie>(CLICK_DEBOUNCE_DELAY, viewLifecycleOwner.lifecycleScope, false) { movie ->
+            findNavController().navigate(R.id.action_moviesFragment_to_detailsFragment,
+                DetailsFragment.createArgs(movie.id, movie.image))
+        }
+
+        adapter = MoviesAdapter { movie ->
+            (activity as RootActivity).animateBottomNavigationView()
+            onMovieClickDebounce(movie)
+        }
 
         placeholderMessage = binding.placeholderMessage
         queryInput = binding.queryInput
@@ -97,6 +117,8 @@ class MoviesFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        adapter = null
+        moviesList.adapter = null
         textWatcher?.let { queryInput.removeTextChangedListener(it) }
     }
 
@@ -134,16 +156,21 @@ class MoviesFragment : Fragment() {
         placeholderMessage.visibility = View.GONE
         progressBar.visibility = View.GONE
 
-        adapter.movies.clear()
-        adapter.movies.addAll(movies)
-        adapter.notifyDataSetChanged()
+        adapter?.movies?.clear()
+        adapter?.movies?.addAll(movies)
+        adapter?.notifyDataSetChanged()
     }
 
     private fun clickDebounce(): Boolean {
         val current = isClickAllowed
         if (isClickAllowed) {
             isClickAllowed = false
-            handler.postDelayed({ isClickAllowed = true }, CLICK_DEBOUNCE_DELAY)
+            // handler.postDelayed({ isClickAllowed = true }, CLICK_DEBOUNCE_DELAY)
+            //viewLifecycleOwner.lifecycleScope.launch { - д.б. вот так, но у меня не работает, поэтому заменила на:
+            CoroutineScope(Dispatchers.Main).launch {
+                delay(CLICK_DEBOUNCE_DELAY)
+                isClickAllowed = true
+            }
         }
         return current
     }
