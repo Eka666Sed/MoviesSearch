@@ -1,10 +1,11 @@
 package ru.yandex.practicum.moviessearch.data
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import ru.yandex.practicum.moviessearch.data.converters.MovieCastConverter
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastRequest
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastResponse
 import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsRequest
-import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsResponse
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchRequest
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchResponse
 import ru.yandex.practicum.moviessearch.domain.api.MoviesRepository
@@ -18,64 +19,51 @@ class MoviesRepositoryImpl(
     private val movieCastConverter: MovieCastConverter,
 ) : MoviesRepository {
 
-    override fun searchMovies(expression: String): Resource<List<Movie>> {
-        val response = networkClient.doRequest(MoviesSearchRequest(expression))
-        return when (response.resultCode) {
-            -1 -> {
-                Resource.Error("Проверьте подключение к интернету")
-            }
-            200 -> {
-                with(response as MoviesSearchResponse) {
-                    Resource.Success(results.map {
-                        Movie(it.id, it.resultType, it.image, it.title, it.description)
-                    })
-                }
-            }
-            else -> {
-                Resource.Error("Ошибка сервера")
-            }
-        }
-    }
-
-    override fun getMovieDetails(movieId: String): Resource<MovieDetails> {
-        val response = networkClient.doRequest(MovieDetailsRequest(movieId))
-        return when (response.resultCode) {
-            -1 -> {
-                Resource.Error("Проверьте подключение к интернету")
-            }
-            200 -> {
-                with(response as MovieDetailsResponse) {
-                    Resource.Success(
-                        MovieDetails(
-                            id, title, imDbRating ?: "", year,
-                            countries, genres, directors, writers, stars, plot
+    override fun searchMovies(expression: String): Flow<Resource<List<Movie>>> {
+        return flow {
+            val response = networkClient.doRequest(MoviesSearchRequest(expression))
+            when (response.resultCode) {
+                -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
+                200 -> {
+                    emit(Resource.Success((response as MoviesSearchResponse).results.map {
+                        Movie(
+                            it.id,
+                            it.resultType,
+                            it.image,
+                            it.title,
+                            it.description
                         )
-                    )
+                    }))
                 }
-            }
-            else -> {
-                Resource.Error("Ошибка сервера")
 
+                else -> emit(Resource.Error("Ошибка сервера"))
             }
         }
     }
 
-    override fun getMovieCast(movieId: String): Resource<MovieCast> {
-        val response = networkClient.doRequest(MovieCastRequest(movieId))
-        return when (response.resultCode) {
-            -1 -> {
-                Resource.Error("Проверьте подключение к интернету")
-            }
+    override fun getMovieDetails(movieId: String): Flow<Resource<MovieDetails>> = flow {
+        val response = networkClient.doRequest(MovieDetailsRequest(movieId))
+        when (response.resultCode) {
+            -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
             200 -> {
-                Resource.Success(
-                    data = movieCastConverter.convert(response as MovieCastResponse)
-                )
+               // emit(Resource.Success((response as MovieDetailsResponse)
             }
-            else -> {
-                Resource.Error("Ошибка сервера")
-
-            }
+            else -> emit(Resource.Error("Ошибка сервера"))
         }
     }
 
+    override fun getMovieCast(movieId: String): Flow<Resource<MovieCast>> = flow {
+        val response = networkClient.doRequest(MovieCastRequest(movieId))
+        when (response.resultCode) {
+            -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
+            200 -> {
+                emit(Resource.Success(
+                    data = movieCastConverter.convert(response as MovieCastResponse)))
+            }
+            else -> emit(Resource.Error("Ошибка сервера"))
+        }
+    }
 }
+
+
+

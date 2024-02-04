@@ -7,9 +7,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.yandex.practicum.moviessearch.data.NetworkClient
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastRequest
+import ru.yandex.practicum.moviessearch.data.dto.MovieCastResponse
 import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsRequest
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchRequest
 import ru.yandex.practicum.moviessearch.data.dto.NamesSearchRequest
+import ru.yandex.practicum.moviessearch.data.dto.NamesSearchResponse
 import ru.yandex.practicum.moviessearch.data.dto.Response
 
 class RetrofitNetworkClient(
@@ -22,19 +24,23 @@ class RetrofitNetworkClient(
             return Response().apply { resultCode = -1 }
         }
 
-//        if ((dto !is MoviesSearchRequest)
-//            && (dto !is MovieDetailsRequest)
-//            && (dto !is MovieCastRequest)
-//            && (dto !is NamesSearchRequest)
-//        ) {
-
-        if (dto !is NamesSearchRequest) {
+        if ((dto !is MoviesSearchRequest)
+            && (dto !is MovieDetailsRequest)
+            && (dto !is MovieCastRequest)
+            && (dto !is NamesSearchRequest)
+        ) {
             return Response().apply { resultCode = 400 }
         }
 
         return withContext(Dispatchers.IO) {
-            try {
-                val response = imdbService.searchNames(dto.expression)
+            try{
+                val response = when (dto){
+                    is MoviesSearchRequest  ->  imdbService.searchMovies(dto.expression)
+                    is MovieDetailsRequest  ->  imdbService.getMovieDetails(dto.movieId)
+                    is MovieCastRequest    ->  imdbService.getFullCast(dto.movieId)
+                    is NamesSearchRequest  ->  imdbService.searchNames(dto.expression)
+                    else -> throw IllegalArgumentException("Unsupported request type")
+                }
                 response.apply { resultCode = 200 }
             } catch (e: Throwable) {
                 Response().apply { resultCode = 500 }
