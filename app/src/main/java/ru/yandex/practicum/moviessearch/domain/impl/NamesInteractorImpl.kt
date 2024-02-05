@@ -9,16 +9,7 @@ import ru.yandex.practicum.moviessearch.util.Resource
 
 class NamesInteractorImpl(private val repository: NamesRepository) : NamesInteractor {
 
-   // private val executor = Executors.newCachedThreadPool()
-
     override fun searchNames(expression: String): Flow<Pair<List<Person>?, String?>> {
-
-//        executor.execute {
-//            when(val resource = repository.searchNames(expression)) {
-//                is Resource.Success -> { consumer.consume(resource.data, null) }
-//                is Resource.Error -> { consumer.consume(resource.data, resource.message) }
-//            }
-//        }
 
         return repository.searchNames(expression).map { result ->
             when (result) {

@@ -6,6 +6,7 @@ import ru.yandex.practicum.moviessearch.data.converters.MovieCastConverter
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastRequest
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastResponse
 import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsRequest
+import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsResponse
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchRequest
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchResponse
 import ru.yandex.practicum.moviessearch.domain.api.MoviesRepository
@@ -35,20 +36,33 @@ class MoviesRepositoryImpl(
                         )
                     }))
                 }
-
                 else -> emit(Resource.Error("Ошибка сервера"))
             }
         }
     }
 
-    override fun getMovieDetails(movieId: String): Flow<Resource<MovieDetails>> = flow {
-        val response = networkClient.doRequest(MovieDetailsRequest(movieId))
-        when (response.resultCode) {
-            -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
-            200 -> {
-               // emit(Resource.Success((response as MovieDetailsResponse)
+    override fun getMovieDetails(movieId: String): Flow<Resource<MovieDetails>> {
+        return flow {
+            val response = networkClient.doRequest(MovieDetailsRequest(movieId))
+            when (response.resultCode) {
+                -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
+                200 -> {
+//                    emit(Resource.Success((response as MovieDetailsResponse)
+//                        MovieDetails(
+//                            it.id, it.title, it.imDbRating ?: "", it.year,
+//                            it.countries, it.genres, it.directors, it.writers, it.stars, it.plot
+//                        )
+//                    ))
+                    response as MovieDetailsResponse
+                    emit(Resource.Success(MovieDetails(response.id, response.title,
+                        response.imDbRating ?: "", response.year,
+                            response.countries, response.genres, response.directors,
+                        response.writers, response.stars, response.plot
+                    )))
+                }
+
+                else -> emit(Resource.Error("Ошибка сервера"))
             }
-            else -> emit(Resource.Error("Ошибка сервера"))
         }
     }
 
