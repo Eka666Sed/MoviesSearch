@@ -3,10 +3,13 @@ package ru.yandex.practicum.moviessearch.data
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import ru.yandex.practicum.moviessearch.data.converters.MovieCastConverter
+import ru.yandex.practicum.moviessearch.data.converters.MovieDbConvertor
+import ru.yandex.practicum.moviessearch.data.db.AppDatabase
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastRequest
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastResponse
 import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsRequest
 import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsResponse
+import ru.yandex.practicum.moviessearch.data.dto.MovieDto
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchRequest
 import ru.yandex.practicum.moviessearch.data.dto.MoviesSearchResponse
 import ru.yandex.practicum.moviessearch.domain.api.MoviesRepository
@@ -18,27 +21,54 @@ import ru.yandex.practicum.moviessearch.util.Resource
 class MoviesRepositoryImpl(
     private val networkClient: NetworkClient,
     private val movieCastConverter: MovieCastConverter,
+    private val appDatabase: AppDatabase,
+    private val movieDbConvertor: MovieDbConvertor,
 ) : MoviesRepository {
 
-    override fun searchMovies(expression: String): Flow<Resource<List<Movie>>> {
-        return flow {
-            val response = networkClient.doRequest(MoviesSearchRequest(expression))
-            when (response.resultCode) {
-                -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
-                200 -> {
-                    emit(Resource.Success((response as MoviesSearchResponse).results.map {
-                        Movie(
-                            it.id,
-                            it.resultType,
-                            it.image,
-                            it.title,
-                            it.description
-                        )
-                    }))
+//    override fun searchMovies(expression: String): Flow<Resource<List<Movie>>> {
+//        return flow {
+//            val response = networkClient.doRequest(MoviesSearchRequest(expression))
+//            when (response.resultCode) {
+//                -1 -> emit(Resource.Error("Проверьте подключение к интернету"))
+//                200 -> {
+//                    emit(Resource.Success((response as MoviesSearchResponse).results.map {
+//                        Movie(
+//                            it.id,
+//                            it.resultType,
+//                            it.image,
+//                            it.title,
+//                            it.description
+//                        )
+//                    }))
+//                }
+//                else -> emit(Resource.Error("Ошибка сервера"))
+//            }
+//        }
+//    }
+    override fun searchMovies(expression: String): Flow<Resource<List<Movie>>> = flow {
+       val response = networkClient.doRequest(MoviesSearchRequest(expression))
+        when (response.resultCode) {
+        -1 -> {
+            emit(Resource.Error("Проверьте подключение к интернету"))
+        }
+        200 -> {
+            with(response as MoviesSearchResponse) {
+                val data = results.map {
+                    Movie(it.id, it.resultType, it.image, it.title, it.description)
                 }
-                else -> emit(Resource.Error("Ошибка сервера"))
+                saveMovie(results)
+                emit(Resource.Success(data))
             }
         }
+        else -> {
+            emit(Resource.Error("Ошибка сервера"))
+               }
+        }
+    }
+
+    private suspend fun saveMovie(movies: List<MovieDto>) {
+        val movieEntities = movies.map { movie -> movieDbConvertor.map(movie) }
+        appDatabase.movieDao().insertMovies(movieEntities)
     }
 
     override fun getMovieDetails(movieId: String): Flow<Resource<MovieDetails>> {

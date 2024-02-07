@@ -1,6 +1,7 @@
 package ru.yandex.practicum.moviessearch.di
 
 import android.content.Context
+import androidx.room.Room
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -9,6 +10,7 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.yandex.practicum.moviessearch.data.NetworkClient
+import ru.yandex.practicum.moviessearch.data.db.AppDatabase
 import ru.yandex.practicum.moviessearch.data.network.IMDbApiService
 import ru.yandex.practicum.moviessearch.data.network.RetrofitNetworkClient
 
@@ -41,4 +43,8 @@ val dataModule = module {
         RetrofitNetworkClient(get(), androidContext())
     }
 
+    single {
+        Room.databaseBuilder(androidContext(), AppDatabase::class.java, "database.db")
+            .build()
+    }
 }

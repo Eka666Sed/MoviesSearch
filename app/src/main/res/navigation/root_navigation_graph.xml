@@ -48,4 +48,11 @@
         android:name="ru.yandex.practicum.moviessearch.ui.info.InfoFragment"
         android:label="fragment_info"
         tools:layout="@layout/fragment_info" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="ru.yandex.practicum.moviessearch.ui.history.HistoryFragment"
+        android:label="fragment_history"
+        tools:layout="@layout/fragment_history" />
+
 </navigation>

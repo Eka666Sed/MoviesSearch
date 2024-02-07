@@ -6,6 +6,7 @@ import org.koin.dsl.module
 import ru.yandex.practicum.moviessearch.presentation.cast.MoviesCastViewModel
 import ru.yandex.practicum.moviessearch.presentation.details.AboutViewModel
 import ru.yandex.practicum.moviessearch.presentation.details.PosterViewModel
+import ru.yandex.practicum.moviessearch.presentation.history.HistoryViewModel
 import ru.yandex.practicum.moviessearch.presentation.movies.MoviesViewModel
 import ru.yandex.practicum.moviessearch.presentation.names.NamesViewModel
 
@@ -29,6 +30,10 @@ val viewModelModule = module {
 
     viewModel{
         NamesViewModel(androidContext(), get())
+    }
+
+    viewModel{
+        HistoryViewModel(androidContext(), get())
     }
 
 }
