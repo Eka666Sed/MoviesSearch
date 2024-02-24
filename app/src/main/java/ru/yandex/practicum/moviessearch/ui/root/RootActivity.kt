@@ -1,8 +1,9 @@
 package ru.yandex.practicum.moviessearch.ui.root
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import ru.yandex.practicum.moviessearch.R
@@ -33,6 +34,15 @@ class RootActivity : AppCompatActivity() {
                 }
             }
         }
+
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val dialog = ExitDialogFragment()
+                dialog.show(supportFragmentManager, "exit_dialog")
+            }
+        }
+
+        onBackPressedDispatcher.addCallback(this, callback)
     }
     fun animateBottomNavigationView() {
         binding.bottomNavigationView.visibility = View.GONE
