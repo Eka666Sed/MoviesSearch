@@ -1,6 +1,6 @@
 # MoviesSearch
 
-
+The application for searching for movies, viewing information about movies and actors while maintaining the search history.
 
 # Stack
 - Android Studio
