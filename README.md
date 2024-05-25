@@ -23,8 +23,3 @@ The application for searching for movies, viewing information about movies and a
 - Open the project in Android Studio.
 - Set up your Android device/emulator/simulator.
 - Build and run the project.
-
-
-# Creator
-
-📱Ekaterina Sedova
